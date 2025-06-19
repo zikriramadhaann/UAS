@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() => runApp(const NutriCareApp());
 
@@ -42,6 +43,7 @@ class FormulirGabungan extends StatefulWidget {
 }
 
 class _FormulirGabunganState extends State<FormulirGabungan> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final _formKey = GlobalKey<FormState>();
 
   String selectedForm = 'Bantuan Anak Sekolah';
@@ -75,6 +77,71 @@ class _FormulirGabunganState extends State<FormulirGabungan> {
   final TextEditingController alamatCtrl = TextEditingController();
   final TextEditingController fasilitasCtrl = TextEditingController();
   final TextEditingController telpCtrl = TextEditingController();
+
+  Future<void> _saveFormData() async {
+    if (_formKey.currentState!.validate()) {
+      Map<String, dynamic> formData = {};
+      if (selectedForm == 'Bantuan Anak Sekolah') {
+        formData = {
+          'jenis_formulir': selectedForm,
+          'nama_lengkap': namaCtrl.text,
+          'gender': selectedGender,
+          'nomor_urut_absen': nomorUrutAbsenCtrl.text,
+          'kelas': kelasCtrl.text,
+          'asal_sekolah': asalSekolahCtrl.text,
+          'nama_wali_kelas': waliKelasCtrl.text,
+          'nama_orang_tua': ortuAnakCtrl.text,
+          'timestamp': FieldValue.serverTimestamp(),
+        };
+      } else if (selectedForm == 'Bantuan Balita') {
+        formData = {
+          'jenis_formulir': selectedForm,
+          'nama_lengkap': namaCtrl.text,
+          'gender': selectedGender,
+          'usia_bulan': usiaBlnCtrl.text,
+          'berat_badan_kg': beratCtrl.text,
+          'tinggi_badan_cm': tinggiCtrl.text,
+          'alergi': alergiCtrl.text,
+          'nama_orang_tua': ortuCtrl.text,
+          'timestamp': FieldValue.serverTimestamp(),
+        };
+      } else if (selectedForm == 'Bantuan Ibu Hamil') {
+        formData = {
+          'jenis_formulir': selectedForm,
+          'nama_lengkap': namaCtrl.text,
+          'nik': nikCtrl.text,
+          'usia_ibu_hamil_tahun': _usiaIbuHamilCtrl.text,
+          'usia_kehamilan_minggu': usiaHamilCtrl.text,
+          'alamat_tempat_tinggal': alamatCtrl.text,
+          'faskes_dikunjungi': fasilitasCtrl.text,
+          'no_telepon': telpCtrl.text,
+          'timestamp': FieldValue.serverTimestamp(),
+        };
+      }
+
+      try {
+        await _firestore.collection('formulirs').add(formData);
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Data formulir berhasil disimpan ke Firebase'),
+          ),
+        );
+        setState(() {
+          _clearForm();
+          // Jika ingin reset jenis formulir ke default, aktifkan baris di bawah:
+          // selectedForm = 'Bantuan Anak Sekolah';
+          selectedForm = 'Bantuan Balita';
+          selectedForm = 'Bantuan Ibu Hamil';
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(
+          // ignore: use_build_context_synchronously
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal menyimpan data: $e')));
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -239,23 +306,7 @@ class _FormulirGabunganState extends State<FormulirGabungan> {
                     ),
                     const SizedBox(height: 20),
                     ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Data formulir berhasil disimpan'),
-                            ),
-                          );
-                        }
-                        namaCtrl.clear();
-                        usiaCtrl.clear();
-                        asalSekolahCtrl.clear();
-                        kelasCtrl.clear();
-                        nomorUrutAbsenCtrl.clear();
-                        selectedGender = null;
-                        ortuCtrl.clear();
-                        waliKelasCtrl.clear();
-                      },
+                      onPressed: _saveFormData,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF3CAD75),
                         foregroundColor: Colors.white,
@@ -335,6 +386,22 @@ class _FormulirGabunganState extends State<FormulirGabungan> {
         ),
       ),
     );
+  }
+
+  void _clearForm() {
+    namaCtrl.clear();
+    nomorUrutAbsenCtrl.clear();
+    selectedGender = null;
+    usiaCtrl.clear();
+    asalSekolahCtrl.clear();
+    kelasCtrl.clear();
+    waliKelasCtrl.clear();
+    ortuAnakCtrl.clear();
+    usiaBlnCtrl.clear();
+    beratCtrl.clear();
+    tinggiCtrl.clear();
+    alergiCtrl.clear();
+    ortuCtrl.clear();
   }
 
   Widget _buildTextField(TextEditingController controller, String label) {

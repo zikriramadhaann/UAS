@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 class TambahJadwalPage extends StatefulWidget {
   const TambahJadwalPage({super.key});
 
@@ -20,6 +20,9 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
     'Bantuan Balita',
     'Bantuan Ibu Hamil',
   ];
+
+  final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
 
   Future<void> _selectDate() async {
     DateTime? picked = await showDatePicker(
@@ -43,6 +46,45 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
     if (picked != null) {
       setState(() {
         waktuController.text = picked.format(context);
+      });
+    }
+  }
+
+  Future<void> _simpanJadwal() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      await FirebaseFirestore.instance.collection('jadwals').add({
+        'jenis_bantuan': selectedJenis,
+        'tanggal': tanggalController.text,
+        'waktu': waktuController.text,
+        'lokasi': lokasiController.text,
+        'catatan': catatanController.text,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Jadwal berhasil disimpan')),
+      );
+      tanggalController.clear();
+      waktuController.clear();
+      lokasiController.clear();
+ catatanController.clear();
+ // Navigate back to home page after successful save
+ Navigator.pop(context);
+      setState(() {
+        selectedJenis = jenisBantuan[0];
+      });
+    } catch (e) {
+ print('Error saving schedule: $e'); // Debug print
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menyimpan jadwal: $e'),
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
       });
     }
   }
@@ -98,144 +140,154 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
                     ),
                   ],
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text(
-                      'Tambah Jadwal Bantuan',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'Tambah Jadwal Bantuan',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 1),
-                    const Text(
-                      'Silakan isi formulir berikut dengan benar.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Dropdown Jenis Bantuan
-                    _buildLabel("Jenis Bantuan"),
-                    DropdownButtonFormField<String>(
-                      value: selectedJenis,
-                      isExpanded: true,
-                      icon: const Icon(
-                        Icons.arrow_drop_down,
-                        color: Color(0xFF3CAD75),
+                      const SizedBox(height: 1),
+                      const Text(
+                        'Silakan isi formulir berikut dengan benar.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 14, color: Colors.grey),
                       ),
-                      decoration: _inputDecoration(
-                        hintText: 'Pilih jenis bantuan',
-                      ),
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black87,
-                      ),
-                      dropdownColor: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      items: _buildDropdownItems(),
-                      onChanged: (newValue) {
-                        setState(() {
-                          selectedJenis = newValue!;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 5),
+                      const SizedBox(height: 12),
 
-                    // Tanggal
-                    _buildLabel("Tanggal"),
-                    TextFormField(
-                      controller: tanggalController,
-                      readOnly: true,
-                      onTap: _selectDate,
-                      decoration: _inputDecoration(hintText: 'dd/mm/yyyy'),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Tanggal wajib diisi';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 5),
-
-                    // Waktu
-                    _buildLabel("Waktu"),
-                    TextFormField(
-                      controller: waktuController,
-                      readOnly: true,
-                      onTap: _selectTime,
-                      decoration: _inputDecoration(hintText: '08:00'),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Waktu wajib diisi';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 5),
-
-                    // Lokasi Pembagian
-                    _buildLabel("Lokasi Pembagian"),
-                    TextFormField(
-                      controller: lokasiController,
-                      decoration: _inputDecoration(
-                        hintText: 'Contoh: Aula sekolah',
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Lokasi pembagian wajib diisi';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 5),
-
-                    // Catatan
-                    _buildLabel("Catatan"),
-                    TextFormField(
-                      controller: catatanController,
-                      minLines: 3, // minimal 3 baris
-                      maxLines:
-                          null, // tidak dibatasi, akan bertambah sesuai isi
-                      decoration: _inputDecoration(
-                        hintText:
-                            'Contoh: Perlu koordinasi dengan kader RT ',
-                      ),
-                    ),
-
-                    const SizedBox(height: 22),
-
-                    // Tombol Simpan
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Jadwal berhasil disimpan'),
-                            ),
-                          );
+                      // Dropdown Jenis Bantuan
+                      _buildLabel("Jenis Bantuan"),
+                      DropdownButtonFormField<String>(
+                        value: selectedJenis,
+                        isExpanded: true,
+                        icon: const Icon(
+                          Icons.arrow_drop_down,
+                          color: Color(0xFF3CAD75),
+                        ),
+                        decoration: _inputDecoration(
+                          hintText: 'Pilih jenis bantuan',
+                        ),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black87,
+                        ),
+                        dropdownColor: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        items: _buildDropdownItems(),
+                        onChanged: (newValue) {
+                          setState(() {
+                            selectedJenis = newValue!;
+                          });
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF3CAD75),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+                      ),
+                      const SizedBox(height: 5),
+
+                      // Tanggal
+                      _buildLabel("Tanggal"),
+                      TextFormField(
+                        controller: tanggalController,
+                        readOnly: true,
+                        onTap: _selectDate,
+                        decoration: _inputDecoration(hintText: 'dd/mm/yyyy'),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Tanggal wajib diisi';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 5),
+
+                      // Waktu
+                      _buildLabel("Waktu"),
+                      TextFormField(
+                        controller: waktuController,
+                        readOnly: true,
+                        onTap: _selectTime,
+                        decoration: _inputDecoration(hintText: '08:00'),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Waktu wajib diisi';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 5),
+
+                      // Lokasi Pembagian
+                      _buildLabel("Lokasi Pembagian"),
+                      TextFormField(
+                        controller: lokasiController,
+                        decoration: _inputDecoration(
+                          hintText: 'Contoh: Selayo',
                         ),
-                        child: const Text(
-                          'SIMPAN',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Lokasi pembagian wajib diisi';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 5),
+
+                      // Catatan
+                      _buildLabel("Catatan Lokasi"),
+                      TextFormField(
+                        controller: catatanController,
+                        minLines: 3,
+                        maxLines: null,
+                        decoration: _inputDecoration(
+                          hintText: 'Contoh: Puskesmas Selayo ',
                         ),
                       ),
-                    ),
-                  ],
+
+                      const SizedBox(height: 22),
+
+                      // Tombol Simpan
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isLoading
+                              ? null
+                              : () async {
+                                  if (_formKey.currentState!.validate()) {
+                                    await _simpanJadwal();
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF3CAD75),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text(
+                                  'SIMPAN',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -265,18 +317,18 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
             onTap: (idx) {
               switch (idx) {
                 case 0:
-                  Navigator.pushNamed(context, '/home');
+ Navigator.pop(context); // or navigate to home if using Navigator
                   break;
                 case 1:
-                  Navigator.pushNamed(context, '/formulir');
+ Navigator.pop(context); // or navigate to formulir if using Navigator
                   break;
                 case 2:
                   Navigator.pushNamed(context, '/histori');
                   break;
                 case 3:
                   Navigator.pushNamed(context, '/profil');
-                  break;
-              }
+ break;
+              }      
             },
             items: const [
               BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Beranda'),

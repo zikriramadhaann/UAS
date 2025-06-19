@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -20,12 +21,10 @@ class _RegisterPageState extends State<RegisterPage> {
 
   static const String _kodePetugasValid = 'PETUGAS123';
 
-  Future<void> _simpanKeFirestore() async {
-    await FirebaseFirestore.instance.collection('users').add({
+  Future<void> _simpanKeFirestore(String uid) async {
+    await FirebaseFirestore.instance.collection('users').doc(uid).set({
       'name': _nameController.text.trim(),
       'email': _emailController.text.trim(),
-      'password':
-          _passwordController.text.trim(), // plaintext (untuk demo saja)
       'role': 'petugas lapangan',
       'created_at': DateTime.now().toIso8601String(),
     });
@@ -146,19 +145,30 @@ class _RegisterPageState extends State<RegisterPage> {
         onPressed: () async {
           if (_formKey.currentState!.validate()) {
             try {
-              await _simpanKeFirestore();
-              // ignore: use_build_context_synchronously
+              // Registrasi ke Firebase Auth
+              UserCredential userCredential = await FirebaseAuth.instance
+                  .createUserWithEmailAndPassword(
+                email: _emailController.text.trim(),
+                password: _passwordController.text.trim(),
+              );
+              // Simpan ke Firestore dengan UID user
+              await _simpanKeFirestore(userCredential.user!.uid);
+
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Pendaftaran berhasil!')),
               );
               await Future.delayed(const Duration(seconds: 1));
-              // ignore: use_build_context_synchronously
               Navigator.pushReplacementNamed(context, '/login');
+            } on FirebaseAuthException catch (e) {
+              String message = 'Gagal daftar: ${e.message}';
+              if (e.code == 'email-already-in-use') {
+                message = 'Email sudah terdaftar.';
+              }
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(SnackBar(content: Text(message)));
             } catch (e) {
-              ScaffoldMessenger.of(
-                // ignore: use_build_context_synchronously
-                context,
-              ).showSnackBar(SnackBar(content: Text('Gagal daftar: $e')));
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(SnackBar(content: Text('Gagal daftar: $e')));
             }
           }
         },

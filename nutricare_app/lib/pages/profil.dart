@@ -1,17 +1,80 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'edit_profil.dart';
+import 'auth/login.dart'; // Import halaman login
 
-class ProfilPage extends StatelessWidget {
-  final String petugasName;
-  final String role;
-  final String email;
+class ProfilPage extends StatefulWidget {
+  const ProfilPage({super.key});
 
-  const ProfilPage({
-    super.key,
-    this.petugasName = 'Zikri Ramadhan',
-    this.role = 'Petugas Lapangan',
-    this.email = 'zikriramadhan@gmail.com',
-  });
+  @override
+  State<ProfilPage> createState() => _ProfilPageState();
+}
+
+class _ProfilPageState extends State<ProfilPage> {
+  String _petugasName = 'Memuat...';
+  String _role = 'Memuat...';
+  String _email = 'Memuat...';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  // Fungsi Title Case
+  String _toTitleCase(String text) {
+    if (text.isEmpty) return text;
+    return text
+        .split(' ')
+        .map((word) =>
+            word.isEmpty ? word : word[0].toUpperCase() + word.substring(1).toLowerCase())
+        .join(' ');
+  }
+
+  Future<void> _loadUserData() async {
+    User? user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      // Redirect to login if user is not logged in
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+      );
+      return;
+    }
+
+    try {
+      DocumentSnapshot userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+
+      if (userDoc.exists) {
+        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+        setState(() {
+          _petugasName = userData['name'] ?? 'N/A';
+          _role = _toTitleCase(userData['role'] ?? 'N/A');
+          _email = user.email ?? 'N/A'; // Use email from Firebase Auth
+        });
+      } else {
+        // Handle case where user document does not exist in Firestore
+        setState(() {
+          _petugasName = 'Data tidak ditemukan';
+          _role = 'Data tidak ditemukan';
+          _email = user.email ?? 'N/A';
+        });
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print("Error fetching user data: $e");
+      }
+      setState(() {
+        _petugasName = 'Error memuat data';
+        _role = 'Error memuat data';
+        _email = user.email ?? 'N/A';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +143,6 @@ class ProfilPage extends StatelessWidget {
                       border: Border.all(color: Colors.grey.shade300),
                       boxShadow: [
                         BoxShadow(
-                          // ignore: deprecated_member_use
                           color: Colors.black.withOpacity(0.03),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
@@ -89,11 +151,11 @@ class ProfilPage extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        _buildInfoTile(Icons.person, petugasName),
+                        _buildInfoTile(Icons.person, _petugasName),
                         const Divider(),
-                        _buildInfoTile(Icons.work_outline, role),
+                        _buildInfoTile(Icons.work_outline, _role),
                         const Divider(),
-                        _buildInfoTile(Icons.email_outlined, email),
+                        _buildInfoTile(Icons.email_outlined, _email),
                       ],
                     ),
                   ),

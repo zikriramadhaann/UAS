@@ -3,6 +3,7 @@ import 'register.dart';
 import 'forgot_password.dart';
 import 'package:nutricare_app/pages/home.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,75 +16,73 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+    // ...existing code...
   void _login() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
-
+  
     if (email.isEmpty || password.isEmpty) {
       showDialog(
         context: context,
-        builder:
-            (_) => AlertDialog(
-              title: const Text('Peringatan'),
-              content: const Text('Email dan kata sandi wajib diisi.'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('OK'),
-                ),
-              ],
+        builder: (_) => AlertDialog(
+          title: const Text('Peringatan'),
+          content: const Text('Email dan kata sandi wajib diisi.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
             ),
+          ],
+        ),
       );
     } else {
-      // Added else block here
       try {
-        final QuerySnapshot result =
-            await FirebaseFirestore.instance
-                .collection('users')
-                .where('email', isEqualTo: email)
-                .where('password', isEqualTo: password)
-                .limit(1)
-                .get();
-
-        if (result.docs.isNotEmpty) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomePage()),
-          );
-        } else {
-          showDialog(
-            context: context,
-            builder:
-                (_) => AlertDialog(
-                  title: const Text('Login Gagal'),
-                  content: const Text('Email atau kata sandi salah.'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('OK'),
-                    ),
-                  ],
-                ),
-          );
+        // Login dengan Firebase Auth
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+        // Jika berhasil, arahkan ke HomePage
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+      } on FirebaseAuthException catch (e) {
+        String message = 'Terjadi kesalahan saat login.';
+        if (e.code == 'user-not-found' || e.code == 'wrong-password') {
+          message = 'Email atau kata sandi salah.';
         }
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('Login Gagal'),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
       } catch (e) {
         showDialog(
           context: context,
-          builder:
-              (_) => AlertDialog(
-                title: const Text('Error'),
-                content: Text('Terjadi kesalahan saat mencoba login: $e'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('OK'),
-                  ),
-                ],
+          builder: (_) => AlertDialog(
+            title: const Text('Error'),
+            content: Text('Terjadi kesalahan saat mencoba login: $e'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
               ),
+            ],
+          ),
         );
       }
-    } // Closing the else block
+    }
   }
+  // ...existing code...
 
   @override
   Widget build(BuildContext context) {

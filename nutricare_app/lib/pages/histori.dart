@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
+// ignore: must_be_immutable
 class HistoriPage extends StatefulWidget {
   const HistoriPage({super.key});
 
@@ -17,53 +21,85 @@ class _HistoriPageState extends State<HistoriPage> {
     'Bantuan Ibu Hamil',
   ];
 
-  List<Map<String, String>> historiData = [
-    {
-      'jenis': 'Bantuan Anak Sekolah',
-      'nama': 'Zikri Ramadhan',
-      'gender': 'Laki-laki',
-      'absen': '07',
-      'kelas': 'Kelas 12',
-      'sekolah': 'SMKN 1 Kota Solok',
-      'wali': 'Ibu Fitriani',
-      'ortu': 'Rina Marlina',
-      'tanggal': '20 April 2025',
-    },
-    {
-      'jenis': 'Bantuan Balita',
-      'nama': 'Aqila Zahra',
-      'gender': 'Perempuan',
-      'usia': '24',
-      'berat': '12',
-      'tinggi': '85',
-      'alergi': 'Tidak Ada',
-      'ortu': 'Rina Marlina',
-      'tanggal': '12 Mei 2025',
-    },
-    {
-      'jenis': 'Bantuan Ibu Hamil',
-      'nama': 'Sari Dewi',
-      'nik': '1234567890123456',
-      'usiaIbu': '32',
-      'usiaKehamilan': '28',
-      'alamat': 'Jl. Merpati No. 10',
-      'faskes': 'Puskesmas Harapan',
-      'telp': '081234567890',
-      'tanggal': '30 Mei 2025',
-    },
-  ];
+  List<Map<String, dynamic>> historiData = [];
+  bool isLoading = true;
+
+  Future<void> fetchHistoriData() async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      QuerySnapshot<Map<String, dynamic>> querySnapshot =
+          await FirebaseFirestore.instance
+              .collection('formulirs')
+              .where(
+                'jenis_formulir',
+                isEqualTo: _getFirestoreFilterValue(selectedFilter),
+              )
+              .get();
+
+      List<Map<String, dynamic>> fetchedData = [];
+      for (var doc in querySnapshot.docs) {
+        fetchedData.add({
+          ...doc.data(),
+          'documentId': doc.id,
+        }); // Include document ID
+      }
+
+      setState(() {
+        historiData = fetchedData;
+        isLoading = false;
+      });
+    } catch (e) {
+      // ignore: avoid_print
+      print("Error fetching data: $e");
+      setState(() {
+        isLoading = false;
+        historiData = []; // Clear data on error
+      });
+      // Optionally show an error message to the user
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to load data. Please try again.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
+  }
+
+  String _getFirestoreFilterValue(String filter) {
+    switch (filter) {
+      case 'Bantuan Anak Sekolah':
+        return 'Bantuan Anak Sekolah';
+      case 'Bantuan Balita':
+        return 'Bantuan Balita';
+      case 'Bantuan Ibu Hamil':
+        return 'Bantuan Ibu Hamil';
+      default:
+        return ''; // Should not happen with defined filters
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    initializeDateFormatting(
+      'id_ID',
+      null,
+    ); // Initialize date formatting for Indonesian locale
     selectedFilter = filters[0];
+    fetchHistoriData(); // Fetch data initially
+  }
+
+  @override
+  void didUpdateWidget(covariant HistoriPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    fetchHistoriData();
   }
 
   @override
   Widget build(BuildContext context) {
-    final filteredData =
-        historiData.where((item) => item['jenis'] == selectedFilter).toList();
-
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       body: Column(
@@ -133,6 +169,7 @@ class _HistoriPageState extends State<HistoriPage> {
                         onChanged: (newValue) {
                           setState(() {
                             selectedFilter = newValue!;
+                            fetchHistoriData(); // Fetch data when filter changes
                           });
                         },
                         dropdownColor: const Color(0xFFFFF8DC),
@@ -151,16 +188,23 @@ class _HistoriPageState extends State<HistoriPage> {
                   const SizedBox(height: 12),
                   Expanded(
                     child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 0),
-                      itemCount: filteredData.length,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 0,
+                      ), // Adjusted padding
+                      itemCount: historiData.length,
                       itemBuilder: (context, index) {
-                        final item = filteredData[index];
+                        final item = historiData[index];
                         return Container(
-                          margin: const EdgeInsets.symmetric(vertical: 6),
+                          margin: const EdgeInsets.symmetric(
+                            vertical: 6,
+                          ), // Adjusted margin
                           child: Card(
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(
+                                12,
+                              ), // Adjusted radius
                               side: const BorderSide(
+                                // Added border side
                                 color: Color(0xFF3CAD75),
                                 width: 1.5,
                               ),
@@ -168,6 +212,7 @@ class _HistoriPageState extends State<HistoriPage> {
                             elevation: 2,
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
+                                // Adjusted padding
                                 horizontal: 16,
                                 vertical: 14,
                               ),
@@ -239,7 +284,7 @@ class _HistoriPageState extends State<HistoriPage> {
     );
   }
 
-  Widget _buildCardContent(Map<String, String> item) {
+  Widget _buildCardContent(Map<String, dynamic> item) {
     List<Widget> children = [];
 
     void addField(String label, String? value) {
@@ -267,37 +312,62 @@ class _HistoriPageState extends State<HistoriPage> {
       );
     }
 
-    switch (item['jenis']) {
+    switch (item['jenis_formulir']) {
       case 'Bantuan Anak Sekolah':
-        addField('Nama Lengkap', item['nama']);
+        addField('Nama Lengkap', item['nama_lengkap']);
         addField('Gender', item['gender']);
-        addField('Nomor Urut Absen', item['absen']);
+        addField('Nomor Urut Absen', item['nomor_urut_absen']);
         addField('Kelas', item['kelas']);
-        addField('Asal Sekolah', item['sekolah']);
-        addField('Nama Wali Kelas', item['wali']);
-        addField('Nama Orang Tua', item['ortu']);
-        addField('Tanggal Penginputan', item['tanggal']);
+        addField('Asal Sekolah', item['asal_sekolah']);
+        addField('Nama Wali Kelas', item['nama_wali_kelas']);
+        addField('Nama Orang Tua', item['nama_orang_tua']);
+        addField(
+          'Tanggal Penginputan',
+          item['timestamp'] != null
+              ? DateFormat(
+                'dd MMMM yyyy',
+                'id_ID',
+              ).format(item['timestamp'].toDate())
+              : '-',
+        );
         break;
       case 'Bantuan Balita':
-        addField('Nama Lengkap', item['nama']);
+        addField('Nama Lengkap', item['nama_lengkap']);
         addField('Gender', item['gender']);
-        addField('Usia (bulan)', item['usia']);
-        addField('Berat Badan (kg)', item['berat']);
-        addField('Tinggi Badan (cm)', item['tinggi']);
+        addField('Usia (bulan)', item['usia_bulan']?.toString());
+        addField('Berat Badan (kg)', item['berat_badan_kg']?.toString());
+        addField('Tinggi Badan (cm)', item['tinggi_badan_cm']?.toString());
         addField('Alergi (Jika Ada)', item['alergi']);
-        addField('Nama Orang Tua', item['ortu']);
-        addField('Tanggal Penginputan', item['tanggal']);
+        addField('Nama Orang Tua', item['nama_orang_tua']);
+        addField(
+          'Tanggal Penginputan',
+          item['timestamp'] != null
+              ? DateFormat(
+                'dd MMMM yyyy',
+                'id_ID',
+              ).format(item['timestamp'].toDate())
+              : '-',
+        );
         break;
       case 'Bantuan Ibu Hamil':
-        addField('Nama Lengkap', item['nama']);
+        addField('Nama Lengkap', item['nama_lengkap']);
         addField('NIK', item['nik']);
-        addField('Usia Ibu Hamil (tahun)', item['usiaIbu']);
-        addField('Usia Kehamilan (minggu)', item['usiaKehamilan']);
-        addField('Alamat Tempat Tinggal', item['alamat']);
-        addField('Faskes yang dikunjugi', item['faskes']);
-        addField('No.Telp', item['telp']);
-        addField('Tanggal Penginputan', item['tanggal']);
+        addField('Usia Ibu Hamil (tahun)', item['usia_ibu_hamil_tahun']);
+        addField('Usia Kehamilan (minggu)', item['usia_kehamilan_minggu']);
+        addField('Alamat Tempat Tinggal', item['alamat_tempat_tinggal']);
+        addField('No.Telp', item['no_telepon']);
+        addField('Faskes yang dikunjungi', item['faskes_dikunjungi']);
+        addField(
+          'Tanggal Penginputan',
+          item['timestamp'] != null
+              ? DateFormat(
+                'dd MMMM yyyy',
+                'id_ID',
+              ).format(item['timestamp'].toDate())
+              : '-',
+        );
         break;
+
       default:
         children.add(const Text('Data tidak tersedia'));
     }
@@ -333,8 +403,16 @@ class _HistoriPageState extends State<HistoriPage> {
 
               if (confirm == true) {
                 setState(() {
+                  // Get the document ID from the item map
+                  String? documentId = item['documentId'];
+                  if (documentId != null) {
+                    FirebaseFirestore.instance
+                        .collection('formulirs')
+                        .doc(documentId)
+                        .delete();
+                  }
                   historiData.remove(item);
-                });
+                }); // Missing closing brace here
               }
             },
             icon: const Icon(Icons.delete, size: 14, color: Colors.white),

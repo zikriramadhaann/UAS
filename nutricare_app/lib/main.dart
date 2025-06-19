@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart'; // ⬅️ penting agar bisa pakai konfigurasi Firebase
-
+import 'firebase_options.dart';
 import 'pages/auth/splash_screen.dart';
 import 'pages/auth/login.dart';
 import 'pages/auth/register.dart';
