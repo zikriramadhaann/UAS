@@ -304,26 +304,44 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildDetailRow(String label, String? value) {
+    Widget _buildDetailRow(String label, String? value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 120,
-            child: Text(
-              '$label:',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF3CAD75),
-              ),
+            width: 130,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF3CAD75),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const Text(
+                  ':',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF3CAD75),
+                  ),
+                ),
+              ],
             ),
           ),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               value == null || value.isEmpty ? '-' : value,
               style: const TextStyle(color: Colors.black87),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
