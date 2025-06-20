@@ -11,19 +11,19 @@ class RekapBulananPage extends StatelessWidget {
     // Data dummy lengkap
     final List<Map<String, dynamic>> bantuanPerWilayah = [
       {
-        'wilayah': 'Kabupaten Solok',
+        'wilayah': 'Tigo Lurah',
         'anakSekolah': 80,
         'balita': 50,
         'ibuHamil': 25,
       },
       {
-        'wilayah': 'Kota Solok',
+        'wilayah': 'Kubung',
         'anakSekolah': 40,
         'balita': 15,
         'ibuHamil': 10,
       },
       {
-        'wilayah': 'Kota Padang',
+        'wilayah': 'Gununng Talang',
         'anakSekolah': 30,
         'balita': 10,
         'ibuHamil': 5,
@@ -144,12 +144,12 @@ class RekapBulananPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Bulan: $namaBulan',
+                  '$namaBulan',
                   style: const TextStyle(fontSize: 16, color: Colors.black54),
                 ),
                 const SizedBox(height: 2),
                 const Text(
-                  'Provinsi: Sumatera Barat',
+                  'Kabupaten Solok',
                   style: TextStyle(fontSize: 16, color: Colors.black54),
                 ),
               ],
@@ -238,7 +238,7 @@ class RekapBulananPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: 10),
                 // Saran Prioritas Otomatis
                 rekomendasiWidget,
               ],

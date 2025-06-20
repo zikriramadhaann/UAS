@@ -24,6 +24,23 @@ class _HomePageState extends State<HomePage> {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 
+  String _formatTanggalIndo(String tanggal) {
+    // tanggal input: '21/06/2025'
+    final parts = tanggal.split('/');
+    if (parts.length != 3) return tanggal;
+    final hari = parts[0];
+    final bulan = parts[1];
+    final tahun = parts[2];
+    const namaBulan = [
+      '', // dummy index 0
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    int bulanIdx = int.tryParse(bulan) ?? 0;
+    String bulanStr = (bulanIdx >= 1 && bulanIdx <= 12) ? namaBulan[bulanIdx] : bulan;
+    return '$hari $bulanStr $tahun';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -214,7 +231,10 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildDetailRow('Jenis Bantuan', data['jenis_bantuan']),
-                  _buildDetailRow('Tanggal', data['tanggal']),
+                  _buildDetailRow(
+                    'Tanggal',
+                    data['tanggal'] != null ? _formatTanggalIndo(data['tanggal']) : null,
+                  ),
                   _buildDetailRow('Waktu', data['waktu']),
                   _buildDetailRow('Lokasi Pembagian', data['lokasi']),
                   _buildDetailRow('Catatan', data['catatan']),
@@ -304,7 +324,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-    Widget _buildDetailRow(String label, String? value) {
+  Widget _buildDetailRow(String label, String? value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
