@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'register.dart';
 import 'forgot_password.dart';
 import 'package:nutricare_app/pages/home.dart';
+// ignore: unused_import
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+// Halaman Login Utama
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -12,15 +14,19 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
+// State untuk LoginPage
 class _LoginPageState extends State<LoginPage> {
+  // Controller untuk input email
   final TextEditingController _emailController = TextEditingController();
+  // Controller untuk input kata sandi
   final TextEditingController _passwordController = TextEditingController();
 
-    // ...existing code...
+  // Fungsi untuk proses login
   void _login() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
   
+    // Validasi input email dan kata sandi
     if (email.isEmpty || password.isEmpty) {
       showDialog(
         context: context,
@@ -37,22 +43,25 @@ class _LoginPageState extends State<LoginPage> {
       );
     } else {
       try {
-        // Login dengan Firebase Auth
+        // Proses autentikasi dengan Firebase
         await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: email,
           password: password,
         );
-        // Jika berhasil, arahkan ke HomePage
+        // Navigasi ke halaman utama jika login berhasil
         Navigator.pushReplacement(
+          // ignore: use_build_context_synchronously
           context,
           MaterialPageRoute(builder: (context) => const HomePage()),
         );
       } on FirebaseAuthException catch (e) {
-        String message = 'Terjadi kesalahan saat login.';
+        // Penanganan error autentikasi
+        String message = 'Pengguna tidak terdaftar.';
         if (e.code == 'user-not-found' || e.code == 'wrong-password') {
           message = 'Email atau kata sandi salah.';
         }
         showDialog(
+          // ignore: use_build_context_synchronously
           context: context,
           builder: (_) => AlertDialog(
             title: const Text('Login Gagal'),
@@ -66,7 +75,9 @@ class _LoginPageState extends State<LoginPage> {
           ),
         );
       } catch (e) {
+        // Penanganan error umum
         showDialog(
+          // ignore: use_build_context_synchronously
           context: context,
           builder: (_) => AlertDialog(
             title: const Text('Error'),
@@ -82,7 +93,6 @@ class _LoginPageState extends State<LoginPage> {
       }
     }
   }
-  // ...existing code...
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +101,7 @@ class _LoginPageState extends State<LoginPage> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Header
+            // Bagian header dengan logo dan judul aplikasi
             Container(
               width: double.infinity,
               decoration: const BoxDecoration(
@@ -122,23 +132,25 @@ class _LoginPageState extends State<LoginPage> {
                 ],
               ),
             ),
-
-            // Input & Buttons
+            // Form login
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 30, 24, 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Input email
                   TextField(
                     controller: _emailController,
                     decoration: _inputDecoration('Email'),
                   ),
                   const SizedBox(height: 12),
+                  // Input kata sandi
                   TextField(
                     controller: _passwordController,
                     obscureText: true,
                     decoration: _inputDecoration('Kata Sandi'),
                   ),
+                  // Tombol lupa kata sandi
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
@@ -160,7 +172,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-
+                  // Tombol daftar dan masuk
                   Row(
                     children: [
                       Expanded(
@@ -196,6 +208,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  // Dekorasi untuk input field
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
@@ -213,6 +226,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  // Style untuk tombol
   ButtonStyle _buttonStyle() {
     return ElevatedButton.styleFrom(
       backgroundColor: const Color(0xFF3CAD75),

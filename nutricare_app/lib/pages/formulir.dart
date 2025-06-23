@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+// Fungsi utama untuk menjalankan aplikasi
 void main() => runApp(const NutriCareApp());
 
+// Widget utama aplikasi NutriCare
 class NutriCareApp extends StatelessWidget {
   const NutriCareApp({super.key});
 
@@ -35,6 +37,7 @@ class NutriCareApp extends StatelessWidget {
   }
 }
 
+// Widget untuk halaman formulir gabungan
 class FormulirGabungan extends StatefulWidget {
   const FormulirGabungan({super.key});
 
@@ -46,14 +49,16 @@ class _FormulirGabunganState extends State<FormulirGabungan> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final _formKey = GlobalKey<FormState>();
 
+  // Variabel untuk menyimpan jenis formulir yang dipilih
   String selectedForm = 'Bantuan Anak Sekolah';
+  // Daftar jenis formulir yang tersedia
   final List<String> daftarFormulir = [
     'Bantuan Anak Sekolah',
     'Bantuan Balita',
     'Bantuan Ibu Hamil',
   ];
 
-  // Controller Anak Sekolah
+  // Controller untuk input data Anak Sekolah
   final TextEditingController namaCtrl = TextEditingController();
   final TextEditingController nomorUrutAbsenCtrl = TextEditingController();
   String? selectedGender;
@@ -63,14 +68,14 @@ class _FormulirGabunganState extends State<FormulirGabungan> {
   final TextEditingController waliKelasCtrl = TextEditingController();
   final TextEditingController ortuAnakCtrl = TextEditingController();
 
-  // Controller Balita
+  // Controller untuk input data Balita
   final TextEditingController usiaBlnCtrl = TextEditingController();
   final TextEditingController beratCtrl = TextEditingController();
   final TextEditingController tinggiCtrl = TextEditingController();
-  final TextEditingController alergiCtrl = TextEditingController();
+  final TextEditingController faskesCtrl = TextEditingController();
   final TextEditingController ortuCtrl = TextEditingController();
 
-  // Controller Ibu Hamil
+  // Controller untuk input data Ibu Hamil
   final TextEditingController nikCtrl = TextEditingController();
   final TextEditingController _usiaIbuHamilCtrl = TextEditingController();
   final TextEditingController usiaHamilCtrl = TextEditingController();
@@ -78,9 +83,11 @@ class _FormulirGabunganState extends State<FormulirGabungan> {
   final TextEditingController fasilitasCtrl = TextEditingController();
   final TextEditingController telpCtrl = TextEditingController();
 
+  // Fungsi untuk menyimpan data formulir ke Firestore
   Future<void> _saveFormData() async {
     if (_formKey.currentState!.validate()) {
       Map<String, dynamic> formData = {};
+      // Menyusun data sesuai jenis formulir yang dipilih
       if (selectedForm == 'Bantuan Anak Sekolah') {
         formData = {
           'jenis_formulir': selectedForm,
@@ -101,7 +108,7 @@ class _FormulirGabunganState extends State<FormulirGabungan> {
           'usia_bulan': usiaBlnCtrl.text,
           'berat_badan_kg': beratCtrl.text,
           'tinggi_badan_cm': tinggiCtrl.text,
-          'alergi': alergiCtrl.text,
+          'faskes': faskesCtrl.text,
           'nama_orang_tua': ortuCtrl.text,
           'timestamp': FieldValue.serverTimestamp(),
         };
@@ -120,21 +127,21 @@ class _FormulirGabunganState extends State<FormulirGabungan> {
       }
 
       try {
+        // Menyimpan data ke koleksi 'formulirs' di Firestore
         await _firestore.collection('formulirs').add(formData);
         // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Data formulir berhasil disimpan ke Firebase'),
+            content: Text('Data formulir berhasil disimpan.'),
           ),
         );
         setState(() {
           _clearForm();
-          // Jika ingin reset jenis formulir ke default, aktifkan baris di bawah:
-          // selectedForm = 'Bantuan Anak Sekolah';
           selectedForm = 'Bantuan Balita';
           selectedForm = 'Bantuan Ibu Hamil';
         });
       } catch (e) {
+        // Menampilkan pesan error jika gagal menyimpan
         ScaffoldMessenger.of(
           // ignore: use_build_context_synchronously
           context,
@@ -149,6 +156,7 @@ class _FormulirGabunganState extends State<FormulirGabungan> {
       backgroundColor: const Color(0xFFF5F5F5),
       body: Column(
         children: [
+          // Header aplikasi
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: const BoxDecoration(
@@ -202,6 +210,7 @@ class _FormulirGabunganState extends State<FormulirGabungan> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 10),
+                    // Dropdown untuk memilih jenis formulir
                     DropdownButtonFormField<String>(
                       value: selectedForm,
                       isExpanded: true,
@@ -232,10 +241,12 @@ class _FormulirGabunganState extends State<FormulirGabungan> {
                       },
                     ),
                     const SizedBox(height: 20),
+                    // Formulir input data
                     Form(
                       key: _formKey,
                       child: Column(
                         children: [
+                          // Formulir untuk Bantuan Anak Sekolah
                           if (selectedForm == 'Bantuan Anak Sekolah') ...[
                             _buildTextField(namaCtrl, 'Nama Lengkap'),
                             _buildRadioGroup(
@@ -254,6 +265,7 @@ class _FormulirGabunganState extends State<FormulirGabungan> {
                             _buildTextField(asalSekolahCtrl, 'Asal Sekolah'),
                             _buildTextField(waliKelasCtrl, 'Nama Wali Kelas'),
                             _buildTextField(ortuAnakCtrl, 'Nama Orang Tua'),
+                          // Formulir untuk Bantuan Balita
                           ] else if (selectedForm == 'Bantuan Balita') ...[
                             _buildTextField(namaCtrl, 'Nama Lengkap'),
                             _buildRadioGroup(
@@ -272,20 +284,21 @@ class _FormulirGabunganState extends State<FormulirGabungan> {
                                 vertical: 6.0,
                               ),
                               child: TextFormField(
-                                controller: alergiCtrl,
+                                controller: faskesCtrl,
                                 decoration: _inputDecoration(
-                                  hintText: 'Alergi (jika ada)',
+                                  hintText: 'Faskes Yang Dikunjungi',
                                 ),
                                 keyboardType: TextInputType.text,
                               ),
                             ),
                             _buildTextField(ortuCtrl, 'Nama Orang Tua'),
+                          // Formulir untuk Bantuan Ibu Hamil
                           ] else if (selectedForm == 'Bantuan Ibu Hamil') ...[
                             _buildTextField(namaCtrl, 'Nama Lengkap'),
                             _buildTextField(nikCtrl, 'NIK'),
                             _buildTextField(
                               _usiaIbuHamilCtrl,
-                              'Usia Ibu Hamil (tahun)', // Label baru
+                              'Usia Ibu Hamil (tahun)',
                             ),
                             _buildTextField(
                               usiaHamilCtrl,
@@ -305,6 +318,7 @@ class _FormulirGabunganState extends State<FormulirGabungan> {
                       ),
                     ),
                     const SizedBox(height: 20),
+                    // Tombol simpan data
                     ElevatedButton(
                       onPressed: _saveFormData,
                       style: ElevatedButton.styleFrom(
@@ -333,6 +347,7 @@ class _FormulirGabunganState extends State<FormulirGabungan> {
           ),
         ],
       ),
+      // Navigasi bawah aplikasi
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: Color(0xFF3CAD75), width: 2)),
@@ -388,6 +403,7 @@ class _FormulirGabunganState extends State<FormulirGabungan> {
     );
   }
 
+  // Fungsi untuk mengosongkan semua field formulir
   void _clearForm() {
     namaCtrl.clear();
     nomorUrutAbsenCtrl.clear();
@@ -400,15 +416,16 @@ class _FormulirGabunganState extends State<FormulirGabungan> {
     usiaBlnCtrl.clear();
     beratCtrl.clear();
     tinggiCtrl.clear();
-    alergiCtrl.clear();
+    faskesCtrl.clear();
     ortuCtrl.clear();
   }
 
+  // Widget untuk membuat field input teks
   Widget _buildTextField(TextEditingController controller, String label) {
     bool isAngka =
         label.toLowerCase().contains('usia') ||
         label.toLowerCase().contains('kelas') &&
-            !label.toLowerCase().contains('wali') || // Perbaikan di sini
+            !label.toLowerCase().contains('wali') ||
         label.toLowerCase().contains('nomor urut absen') ||
         label.toLowerCase().contains('berat') ||
         label.toLowerCase().contains('tinggi') ||
@@ -431,6 +448,7 @@ class _FormulirGabunganState extends State<FormulirGabungan> {
     );
   }
 
+  // Widget untuk membuat pilihan radio (gender)
   Widget _buildRadioGroup(
     String label,
     List<String> options,
@@ -468,6 +486,7 @@ class _FormulirGabunganState extends State<FormulirGabungan> {
     );
   }
 
+  // Dekorasi untuk field input
   InputDecoration _inputDecoration({required String hintText}) {
     return InputDecoration(
       hintText: hintText,
@@ -490,6 +509,7 @@ class _FormulirGabunganState extends State<FormulirGabungan> {
   }
 }
 
+// Widget dummy untuk halaman lain (beranda, profil, histori)
 class DummyPage extends StatelessWidget {
   final String title;
   const DummyPage({super.key, required this.title});

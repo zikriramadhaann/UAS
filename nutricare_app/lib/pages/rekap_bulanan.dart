@@ -8,7 +8,7 @@ class RekapBulananPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Data dummy lengkap
+    // Data bantuan per wilayah
     final List<Map<String, dynamic>> bantuanPerWilayah = [
       {
         'wilayah': 'Tigo Lurah',
@@ -30,7 +30,7 @@ class RekapBulananPage extends StatelessWidget {
       },
     ];
 
-    // Hitung total per wilayah
+    // Hitung total bantuan per wilayah
     for (var wilayah in bantuanPerWilayah) {
       wilayah['total'] =
           (wilayah['anakSekolah'] as int) +
@@ -38,14 +38,12 @@ class RekapBulananPage extends StatelessWidget {
           (wilayah['ibuHamil'] as int);
     }
 
-    // Proses total seluruh wilayah
-    // ignore: unused_local_variable
-    final int totalAnak = bantuanPerWilayah.fold(
+    // Hitung total bantuan untuk masing-masing kategori
+    final int _ = bantuanPerWilayah.fold(
       0,
       (sum, item) => sum + (item['anakSekolah'] as int),
     );
-    // ignore: unused_local_variable
-    final int totalBalita = bantuanPerWilayah.fold(
+    final int _ = bantuanPerWilayah.fold(
       0,
       (sum, item) => sum + (item['balita'] as int),
     );
@@ -55,21 +53,21 @@ class RekapBulananPage extends StatelessWidget {
       (sum, item) => sum + (item['ibuHamil'] as int),
     );
 
-    // Tambahkan total keseluruhan ke masing-masing wilayah
+    // Hitung ulang total bantuan per wilayah
     for (var wilayah in bantuanPerWilayah) {
       wilayah['total'] =
           wilayah['anakSekolah'] + wilayah['balita'] + wilayah['ibuHamil'];
     }
 
-    // Urutkan untuk cari wilayah dengan permintaan tertinggi
+    // Urutkan wilayah berdasarkan total bantuan (tertinggi ke terendah)
     bantuanPerWilayah.sort((a, b) => b['total'].compareTo(a['total']));
     final Map<String, dynamic> wilayahTertinggi = bantuanPerWilayah.first;
 
-    // Rekomendasi otomatis
+    // Buat rekomendasi wilayah prioritas
     final String rekomendasi =
         'Utamakan wilayah ${wilayahTertinggi['wilayah']} karena total permintaannya tertinggi bulan ini (${wilayahTertinggi['total']} orang).';
 
-    // Widget rekomendasi
+    // Widget rekomendasi wilayah prioritas
     final rekomendasiWidget = Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
       padding: const EdgeInsets.all(16),
@@ -96,7 +94,7 @@ class RekapBulananPage extends StatelessWidget {
       ),
     );
 
-    // Ambil nama bulan sekarang
+    // Inisialisasi format tanggal lokal Indonesia
     initializeDateFormatting('id_ID', null);
     final String namaBulan = DateFormat(
       'MMMM yyyy',
@@ -107,7 +105,7 @@ class RekapBulananPage extends StatelessWidget {
       backgroundColor: const Color(0xFFF5F5F5),
       body: Column(
         children: [
-          // Header
+          // Header aplikasi
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -134,6 +132,7 @@ class RekapBulananPage extends StatelessWidget {
               ],
             ),
           ),
+          // Judul dan info bulan rekap
           Padding(
             padding: const EdgeInsets.only(top: 18, bottom: 4),
             child: Column(
@@ -144,6 +143,7 @@ class RekapBulananPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
+                  // ignore: unnecessary_string_interpolations
                   '$namaBulan',
                   style: const TextStyle(fontSize: 16, color: Colors.black54),
                 ),
@@ -155,6 +155,7 @@ class RekapBulananPage extends StatelessWidget {
               ],
             ),
           ),
+          // Konten utama (grafik dan rekomendasi)
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 22),
@@ -165,7 +166,7 @@ class RekapBulananPage extends StatelessWidget {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
-                // Chart (fl_chart)
+                // Grafik batang bantuan per wilayah
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   padding: const EdgeInsets.all(16),
@@ -187,6 +188,7 @@ class RekapBulananPage extends StatelessWidget {
                           sideTitles: SideTitles(
                             showTitles: true,
                             getTitlesWidget: (value, _) {
+                              // Tampilkan nama wilayah di sumbu X
                               final idx = value.toInt();
                               if (idx >= 0 && idx < bantuanPerWilayah.length) {
                                 return Text(
@@ -204,6 +206,7 @@ class RekapBulananPage extends StatelessWidget {
                             interval: 20,
                             reservedSize: 32,
                             getTitlesWidget: (value, _) {
+                              // Tampilkan angka pada sumbu Y
                               return Text(
                                 value.toInt().toString(),
                                 style: const TextStyle(fontSize: 12),
@@ -221,6 +224,7 @@ class RekapBulananPage extends StatelessWidget {
                       gridData: FlGridData(show: true),
                       borderData: FlBorderData(show: false),
                       barGroups: List.generate(bantuanPerWilayah.length, (i) {
+                        // Data batang untuk setiap wilayah
                         return BarChartGroupData(
                           x: i,
                           barRods: [
@@ -239,14 +243,14 @@ class RekapBulananPage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-                // Saran Prioritas Otomatis
+                // Tampilkan rekomendasi wilayah prioritas
                 rekomendasiWidget,
               ],
             ),
           ),
         ],
       ),
-      // Bottom Navigation Bar dari HomePage
+      // Navigasi bawah aplikasi
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: Color(0xFF3CAD75), width: 2)),
@@ -266,6 +270,7 @@ class RekapBulananPage extends StatelessWidget {
             elevation: 0,
             type: BottomNavigationBarType.fixed,
             onTap: (idx) {
+              // Navigasi ke halaman sesuai indeks
               switch (idx) {
                 case 0:
                   Navigator.pushNamed(context, '/home');

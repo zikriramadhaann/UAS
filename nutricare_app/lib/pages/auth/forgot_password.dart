@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'login.dart';
 import 'dart:async';
 
+// Halaman untuk fitur lupa password
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
 
@@ -10,27 +11,30 @@ class ForgotPasswordPage extends StatefulWidget {
 }
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
+  // Key untuk validasi form
   final _formKey = GlobalKey<FormState>();
+  // Controller untuk input email, otp, password baru, dan konfirmasi password
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _otpController = TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
-  // Tambahkan list email terdaftar di sini
+  // Daftar email yang terdaftar (dummy)
   final List<String> emailTerdaftar = [
     '1@email.com',
     '2@email.com',
     '3@email.com',
   ];
 
+  // State untuk menandai apakah OTP sudah dikirim dan diverifikasi
   bool isOTPSent = false;
   bool isOTPVerified = false;
   String _message = '';
   int _secondsRemaining = 0;
   Timer? _timer;
 
-  // Modifikasi fungsi sendOTP
+  // Fungsi untuk mengirim OTP ke email
   void sendOTP() {
     if (!_formKey.currentState!.validate()) return;
 
@@ -48,6 +52,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     startTimer();
   }
 
+  // Fungsi untuk memulai timer OTP (60 detik)
   void startTimer() {
     _secondsRemaining = 60;
     _timer?.cancel();
@@ -62,6 +67,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     });
   }
 
+  // Fungsi untuk verifikasi OTP
   void verifyOTP() {
     if (_otpController.text == '123456') {
       setState(() {
@@ -75,6 +81,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     }
   }
 
+  // Fungsi untuk menyimpan password baru
   void saveNewPassword() {
     if (!_formKey.currentState!.validate()) return;
 
@@ -83,12 +90,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       return;
     }
 
-    // panggil API untuk update password di server
-
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Kata sandi berhasil diubah!')),
     );
-    // Otomatis kembali ke login
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const LoginPage()),
@@ -110,7 +114,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           key: _formKey,
           child: Column(
             children: [
-              // Header
+              // Header dengan logo dan judul aplikasi
               Container(
                 width: double.infinity,
                 decoration: const BoxDecoration(
@@ -136,13 +140,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 30),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 32),
                 child: Column(
                   children: [
-                    // Email input
+                    // Input email
                     TextFormField(
                       controller: _emailController,
                       decoration: _inputDecoration('Masukkan Email'),
@@ -161,7 +164,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       },
                     ),
                     const SizedBox(height: 10),
-
                     // Tombol kirim OTP
                     SizedBox(
                       width: double.infinity,
@@ -171,8 +173,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         child: const Text('Kirim Kode OTP'),
                       ),
                     ),
-
-                    // Input OTP setelah dikirim
+                    // Jika OTP sudah dikirim, tampilkan input OTP dan tombol verifikasi
                     if (isOTPSent) ...[
                       const SizedBox(height: 20),
                       TextFormField(
@@ -190,8 +191,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         ),
                       ),
                     ],
-
-                    // Form ganti password setelah OTP terverifikasi
+                    // Jika OTP sudah diverifikasi, tampilkan input password baru dan konfirmasi
                     if (isOTPVerified) ...[
                       const SizedBox(height: 20),
                       TextFormField(
@@ -235,8 +235,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         ),
                       ),
                     ],
-
-                    // Pesan kesalahan / info
+                    // Tampilkan pesan error atau info
                     if (_message.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -246,10 +245,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                           textAlign: TextAlign.center,
                         ),
                       ),
-
                     const SizedBox(height: 10),
-
-                    // Kembali ke login
+                    // Navigasi kembali ke halaman login
                     GestureDetector(
                       onTap: () {
                         Navigator.pushReplacement(
@@ -274,6 +271,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     );
   }
 
+  // Dekorasi input field
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
@@ -291,6 +289,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     );
   }
 
+  // Style tombol utama
   ButtonStyle _buttonStyle() {
     return ElevatedButton.styleFrom(
       backgroundColor: const Color(0xFF3CAD75),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+// Halaman pendaftaran pengguna
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
 
@@ -10,8 +11,10 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  // Kunci global untuk form
   final _formKey = GlobalKey<FormState>();
 
+  // Controller untuk setiap field input
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -19,8 +22,10 @@ class _RegisterPageState extends State<RegisterPage> {
       TextEditingController();
   final TextEditingController _kodePetugasController = TextEditingController();
 
+  // Kode petugas yang valid
   static const String _kodePetugasValid = 'PETUGAS123';
 
+  // Menyimpan data pengguna ke Firestore
   Future<void> _simpanKeFirestore(String uid) async {
     await FirebaseFirestore.instance.collection('users').doc(uid).set({
       'name': _nameController.text.trim(),
@@ -81,6 +86,7 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
+  // Widget header/logo aplikasi
   Widget _header() {
     return Container(
       width: double.infinity,
@@ -109,6 +115,7 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
+  // Widget field input dengan validasi
   Widget _inputField(
     TextEditingController controller,
     String label, {
@@ -121,15 +128,19 @@ class _RegisterPageState extends State<RegisterPage> {
       keyboardType: type,
       decoration: _inputDecoration(label),
       validator: (value) {
+        // Validasi jika field kosong
         if (value == null || value.isEmpty) return '$label wajib diisi';
+        // Validasi format email
         if (label == 'Email' &&
             !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
           return 'Format email tidak valid';
         }
+        // Validasi konfirmasi kata sandi
         if (label == 'Konfirmasi Kata Sandi' &&
             value != _passwordController.text) {
           return 'Konfirmasi sandi tidak cocok';
         }
+        // Validasi kode petugas
         if (label == 'Kode Petugas' && value != _kodePetugasValid) {
           return 'Kode petugas salah';
         }
@@ -138,35 +149,45 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
+  // Tombol daftar
   Widget _daftarButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
         onPressed: () async {
+          // Validasi form sebelum daftar
           if (_formKey.currentState!.validate()) {
             try {
-              // Registrasi ke Firebase Auth
+              // Membuat akun baru dengan Firebase Auth
               UserCredential userCredential = await FirebaseAuth.instance
                   .createUserWithEmailAndPassword(
                 email: _emailController.text.trim(),
                 password: _passwordController.text.trim(),
               );
-              // Simpan ke Firestore dengan UID user
+              // Simpan data ke Firestore
               await _simpanKeFirestore(userCredential.user!.uid);
 
+              // Tampilkan pesan sukses
+              // ignore: use_build_context_synchronously
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Pendaftaran berhasil!')),
               );
               await Future.delayed(const Duration(seconds: 1));
+              // Navigasi ke halaman login
+              // ignore: use_build_context_synchronously
               Navigator.pushReplacementNamed(context, '/login');
             } on FirebaseAuthException catch (e) {
+              // Tangani error Firebase Auth
               String message = 'Gagal daftar: ${e.message}';
               if (e.code == 'email-already-in-use') {
                 message = 'Email sudah terdaftar.';
               }
+              // ignore: use_build_context_synchronously
               ScaffoldMessenger.of(context)
                   .showSnackBar(SnackBar(content: Text(message)));
             } catch (e) {
+              // Tangani error lain
+              // ignore: use_build_context_synchronously
               ScaffoldMessenger.of(context)
                   .showSnackBar(SnackBar(content: Text('Gagal daftar: $e')));
             }
@@ -185,6 +206,7 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
+  // Tombol kembali ke halaman login
   Widget _backButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
@@ -203,6 +225,7 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
+  // Dekorasi untuk field input
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,

@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'profil.dart';
 
+// Halaman untuk mengedit profil pengguna
 class EditProfilPage extends StatefulWidget {
   const EditProfilPage({super.key});
 
@@ -11,12 +12,19 @@ class EditProfilPage extends StatefulWidget {
 }
 
 class _EditProfilPageState extends State<EditProfilPage> {
+  // Kunci global untuk form validasi
   final _formKey = GlobalKey<FormState>();
+  // Controller untuk input nama
   late TextEditingController _nameController;
+  // Controller untuk input email (tidak bisa diubah)
   late TextEditingController _emailController;
+  // Variabel untuk menyimpan peran pengguna
   String _role = '';
+  // Variabel untuk menyimpan email pengguna
   String _email = '';
+  // Status loading saat menyimpan data
   bool _isLoading = false;
+  // Status fetching saat mengambil data dari database
   bool _isFetching = true;
 
   @override
@@ -27,6 +35,7 @@ class _EditProfilPageState extends State<EditProfilPage> {
     _fetchUserData();
   }
 
+  // Mengambil data pengguna dari Firestore
   Future<void> _fetchUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -49,6 +58,7 @@ class _EditProfilPageState extends State<EditProfilPage> {
     super.dispose();
   }
 
+  // Menyimpan perubahan profil ke Firestore
   Future<void> _saveProfile() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
@@ -70,6 +80,8 @@ class _EditProfilPageState extends State<EditProfilPage> {
           }
         }
       } catch (e) {
+        // Menampilkan pesan error jika gagal update
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Gagal memperbarui profil: $e')),
         );
@@ -81,6 +93,7 @@ class _EditProfilPageState extends State<EditProfilPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Menampilkan loading saat data sedang diambil
     if (_isFetching) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -103,28 +116,28 @@ class _EditProfilPageState extends State<EditProfilPage> {
           key: _formKey,
           child: Column(
             children: [
+              // Input untuk nama lengkap
               _buildInputField(
                 icon: Icons.person,
                 label: 'Nama Lengkap',
                 controller: _nameController,
               ),
               const SizedBox(height: 16),
-
+              // Menampilkan peran (tidak bisa diubah)
               _buildFixedField(
                 icon: Icons.work_outline,
                 label: 'Peran',
                 value: _role,
               ),
               const SizedBox(height: 16),
-
+              // Menampilkan email (tidak bisa diubah)
               _buildFixedField(
                 icon: Icons.email_outlined,
                 label: 'Email',
                 value: _email,
               ),
               const SizedBox(height: 28),
-
-              // Tombol Simpan
+              // Tombol simpan perubahan
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -152,8 +165,7 @@ class _EditProfilPageState extends State<EditProfilPage> {
                 ),
               ),
               const SizedBox(height: 14),
-
-              // Tombol Batal
+              // Tombol batal kembali ke halaman sebelumnya
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
@@ -179,6 +191,7 @@ class _EditProfilPageState extends State<EditProfilPage> {
     );
   }
 
+  // Widget untuk input field yang bisa diubah (nama)
   Widget _buildInputField({
     required IconData icon,
     required String label,
@@ -211,6 +224,7 @@ class _EditProfilPageState extends State<EditProfilPage> {
     );
   }
 
+  // Widget untuk field yang hanya bisa dibaca (peran dan email)
   Widget _buildFixedField({
     required IconData icon,
     required String label,

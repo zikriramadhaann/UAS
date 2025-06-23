@@ -26,7 +26,6 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Logo NutriCare
             Image.asset(
               'assets/images/logo.png',
               width: 200,

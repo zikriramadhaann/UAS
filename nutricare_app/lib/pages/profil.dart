@@ -1,10 +1,14 @@
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:file_picker/file_picker.dart';
 import 'edit_profil.dart';
-import 'auth/login.dart'; // Import halaman login
+import 'auth/login.dart';
 
+// Halaman Profil Utama
 class ProfilPage extends StatefulWidget {
   const ProfilPage({super.key});
 
@@ -13,17 +17,20 @@ class ProfilPage extends StatefulWidget {
 }
 
 class _ProfilPageState extends State<ProfilPage> {
+  // Variabel untuk menyimpan data pengguna
   String _petugasName = 'Memuat...';
   String _role = 'Memuat...';
   String _email = 'Memuat...';
+  File? _profileImage;
+  Uint8List? _profileImageBytes;
 
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    _loadUserData(); // Memuat data pengguna saat inisialisasi
   }
 
-  // Fungsi Title Case
+  // Fungsi untuk mengubah teks menjadi Title Case
   String _toTitleCase(String text) {
     if (text.isEmpty) return text;
     return text
@@ -33,31 +40,28 @@ class _ProfilPageState extends State<ProfilPage> {
         .join(' ');
   }
 
+  // Fungsi untuk mengambil data pengguna dari Firebase
   Future<void> _loadUserData() async {
     User? user = FirebaseAuth.instance.currentUser;
-
     if (user == null) {
-      // Redirect to login if user is not logged in
+      // Jika belum login, arahkan ke halaman login
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const LoginPage()),
       );
       return;
     }
-
     try {
       DocumentSnapshot userDoc =
           await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-
       if (userDoc.exists) {
         Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
         setState(() {
           _petugasName = userData['name'] ?? 'N/A';
           _role = _toTitleCase(userData['role'] ?? 'N/A');
-          _email = user.email ?? 'N/A'; // Use email from Firebase Auth
+          _email = user.email ?? 'N/A';
         });
       } else {
-        // Handle case where user document does not exist in Firestore
         setState(() {
           _petugasName = 'Data tidak ditemukan';
           _role = 'Data tidak ditemukan';
@@ -76,13 +80,36 @@ class _ProfilPageState extends State<ProfilPage> {
     }
   }
 
+  // Fungsi untuk memilih gambar profil dari perangkat
+  Future<void> _pickImage() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+      withData: kIsWeb,
+    );
+    if (result != null) {
+      if (kIsWeb) {
+        setState(() {
+          _profileImageBytes = result.files.single.bytes;
+        });
+      } else {
+        if (result.files.single.path != null) {
+          setState(() {
+            _profileImage = File(result.files.single.path!);
+          });
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Widget utama halaman profil
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       body: Column(
         children: [
-          // Header
+          // Header dengan logo dan judul aplikasi
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -109,32 +136,62 @@ class _ProfilPageState extends State<ProfilPage> {
               ],
             ),
           ),
-
-          // Body
+          // Konten utama profil
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
               child: Column(
                 children: [
-                  // Foto profil
-                  Container(
-                    width: 208,
-                    height: 208,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: const Color(0xFF3CAD75),
-                        width: 3,
-                      ),
-                      image: const DecorationImage(
-                        image: AssetImage('assets/images/profil.png'),
-                        fit: BoxFit.cover,
-                      ),
+                  // Foto profil dengan tombol edit
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: Stack(
+                      children: [
+                        Container(
+                          width: 208,
+                          height: 208,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xFF3CAD75),
+                              width: 3,
+                            ),
+                            image: DecorationImage(
+                              image: kIsWeb
+                                  ? (_profileImageBytes != null
+                                      ? MemoryImage(_profileImageBytes!)
+                                      : const AssetImage('assets/images/profil.png') as ImageProvider)
+                                  : (_profileImage != null
+                                      ? FileImage(_profileImage!)
+                                      : const AssetImage('assets/images/profil.png') as ImageProvider),
+                              fit: BoxFit.cover,
+                              filterQuality: FilterQuality.high,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 16,
+                          left: 16,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 4,
+                                ),
+                              ],
+                            ),
+                            padding: const EdgeInsets.all(8),
+                            child: const Icon(Icons.camera_alt, color: Color(0xFF3CAD75)),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 24),
-
-                  // Informasi user dalam box
+                  // Informasi pengguna
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -159,10 +216,8 @@ class _ProfilPageState extends State<ProfilPage> {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 28),
-
-                  // Tombol Edit Profil
+                  // Tombol untuk mengedit profil
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
@@ -187,10 +242,8 @@ class _ProfilPageState extends State<ProfilPage> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 14),
-
-                  // Tombol Logout
+                  // Tombol untuk keluar (logout)
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
@@ -217,8 +270,7 @@ class _ProfilPageState extends State<ProfilPage> {
           ),
         ],
       ),
-
-      // Bottom Navigation Bar
+      // Navigasi bawah aplikasi
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: Color(0xFF3CAD75), width: 2)),
@@ -238,6 +290,7 @@ class _ProfilPageState extends State<ProfilPage> {
             elevation: 0,
             type: BottomNavigationBarType.fixed,
             onTap: (idx) {
+              // Navigasi ke halaman lain sesuai indeks
               switch (idx) {
                 case 0:
                   Navigator.pushNamed(context, '/home');
@@ -249,7 +302,6 @@ class _ProfilPageState extends State<ProfilPage> {
                   Navigator.pushNamed(context, '/histori');
                   break;
                 case 3:
-                  // Sudah di halaman profil
                   break;
               }
             },
@@ -274,6 +326,7 @@ class _ProfilPageState extends State<ProfilPage> {
     );
   }
 
+  // Widget untuk menampilkan informasi pengguna dengan ikon
   Widget _buildInfoTile(IconData icon, String text) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,

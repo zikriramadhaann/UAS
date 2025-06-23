@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-// ignore: must_be_immutable
+// Halaman utama untuk menampilkan histori data formulir
 class HistoriPage extends StatefulWidget {
   const HistoriPage({super.key});
 
@@ -13,17 +13,21 @@ class HistoriPage extends StatefulWidget {
 }
 
 class _HistoriPageState extends State<HistoriPage> {
+  // Filter yang sedang dipilih
   late String selectedFilter;
 
+  // Daftar filter jenis formulir
   final List<String> filters = [
     'Bantuan Anak Sekolah',
     'Bantuan Balita',
     'Bantuan Ibu Hamil',
   ];
 
+  // Data histori yang ditampilkan
   List<Map<String, dynamic>> historiData = [];
   bool isLoading = true;
 
+  // Mengambil data histori dari Firestore sesuai filter
   Future<void> fetchHistoriData() async {
     setState(() {
       isLoading = true;
@@ -43,7 +47,7 @@ class _HistoriPageState extends State<HistoriPage> {
         fetchedData.add({
           ...doc.data(),
           'documentId': doc.id,
-        }); // Include document ID
+        });
       }
 
       setState(() {
@@ -55,19 +59,19 @@ class _HistoriPageState extends State<HistoriPage> {
       print("Error fetching data: $e");
       setState(() {
         isLoading = false;
-        historiData = []; // Clear data on error
+        historiData = [];
       });
-      // Optionally show an error message to the user
       // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Failed to load data. Please try again.'),
+          content: Text('Gagal memuat data. Silakan coba lagi.'),
           backgroundColor: Colors.redAccent,
         ),
       );
     }
   }
 
+  // Mendapatkan nilai filter untuk Firestore
   String _getFirestoreFilterValue(String filter) {
     switch (filter) {
       case 'Bantuan Anak Sekolah':
@@ -77,19 +81,20 @@ class _HistoriPageState extends State<HistoriPage> {
       case 'Bantuan Ibu Hamil':
         return 'Bantuan Ibu Hamil';
       default:
-        return ''; // Should not happen with defined filters
+        return '';
     }
   }
 
   @override
   void initState() {
     super.initState();
+    // Inisialisasi format tanggal lokal Indonesia
     initializeDateFormatting(
       'id_ID',
       null,
-    ); // Initialize date formatting for Indonesian locale
+    );
     selectedFilter = filters[0];
-    fetchHistoriData(); // Fetch data initially
+    fetchHistoriData();
   }
 
   @override
@@ -104,6 +109,7 @@ class _HistoriPageState extends State<HistoriPage> {
       backgroundColor: const Color(0xFFF5F5F5),
       body: Column(
         children: [
+          // Header aplikasi
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -130,13 +136,13 @@ class _HistoriPageState extends State<HistoriPage> {
               ],
             ),
           ),
-
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(18, 22, 18, 18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Dropdown filter jenis formulir
                   Container(
                     height: 48,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -169,7 +175,7 @@ class _HistoriPageState extends State<HistoriPage> {
                         onChanged: (newValue) {
                           setState(() {
                             selectedFilter = newValue!;
-                            fetchHistoriData(); // Fetch data when filter changes
+                            fetchHistoriData();
                           });
                         },
                         dropdownColor: const Color(0xFFFFF8DC),
@@ -184,27 +190,26 @@ class _HistoriPageState extends State<HistoriPage> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 12),
+                  // Daftar histori data
                   Expanded(
                     child: ListView.builder(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 0,
-                      ), // Adjusted padding
+                      ),
                       itemCount: historiData.length,
                       itemBuilder: (context, index) {
                         final item = historiData[index];
                         return Container(
                           margin: const EdgeInsets.symmetric(
                             vertical: 6,
-                          ), // Adjusted margin
+                          ),
                           child: Card(
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
                                 12,
-                              ), // Adjusted radius
+                              ),
                               side: const BorderSide(
-                                // Added border side
                                 color: Color(0xFF3CAD75),
                                 width: 1.5,
                               ),
@@ -212,7 +217,6 @@ class _HistoriPageState extends State<HistoriPage> {
                             elevation: 2,
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
-                                // Adjusted padding
                                 horizontal: 16,
                                 vertical: 14,
                               ),
@@ -229,7 +233,7 @@ class _HistoriPageState extends State<HistoriPage> {
           ),
         ],
       ),
-
+      // Navigasi bawah aplikasi
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: Color(0xFF3CAD75), width: 2)),
@@ -284,9 +288,11 @@ class _HistoriPageState extends State<HistoriPage> {
     );
   }
 
+  // Widget untuk menampilkan isi kartu histori
   Widget _buildCardContent(Map<String, dynamic> item) {
     List<Widget> children = [];
 
+    // Fungsi untuk menambah field ke tampilan
     void addField(String label, String? value) {
       children.add(
         Padding(
@@ -312,6 +318,7 @@ class _HistoriPageState extends State<HistoriPage> {
       );
     }
 
+    // Menampilkan data sesuai jenis formulir
     switch (item['jenis_formulir']) {
       case 'Bantuan Anak Sekolah':
         addField('Nama Lengkap', item['nama_lengkap']);
@@ -337,7 +344,7 @@ class _HistoriPageState extends State<HistoriPage> {
         addField('Usia (bulan)', item['usia_bulan']?.toString());
         addField('Berat Badan (kg)', item['berat_badan_kg']?.toString());
         addField('Tinggi Badan (cm)', item['tinggi_badan_cm']?.toString());
-        addField('Alergi (Jika Ada)', item['alergi']);
+        addField('Faskes Yang Dikunjungi', item['faskes']);
         addField('Nama Orang Tua', item['nama_orang_tua']);
         addField(
           'Tanggal Penginputan',
@@ -372,7 +379,7 @@ class _HistoriPageState extends State<HistoriPage> {
         children.add(const Text('Data tidak tersedia'));
     }
 
-    // Tambahkan tombol hapus setelah seluruh field
+    // Tombol hapus data
     children.add(
       Padding(
         padding: const EdgeInsets.only(top: 12),
@@ -380,6 +387,7 @@ class _HistoriPageState extends State<HistoriPage> {
           alignment: Alignment.centerRight,
           child: ElevatedButton.icon(
             onPressed: () async {
+              // Konfirmasi sebelum menghapus data
               final confirm = await showDialog<bool>(
                 context: context,
                 builder:
@@ -401,9 +409,9 @@ class _HistoriPageState extends State<HistoriPage> {
                     ),
               );
 
+              // Jika konfirmasi hapus, hapus data dari Firestore dan list
               if (confirm == true) {
                 setState(() {
-                  // Get the document ID from the item map
                   String? documentId = item['documentId'];
                   if (documentId != null) {
                     FirebaseFirestore.instance
@@ -412,7 +420,7 @@ class _HistoriPageState extends State<HistoriPage> {
                         .delete();
                   }
                   historiData.remove(item);
-                }); // Missing closing brace here
+                });
               }
             },
             icon: const Icon(Icons.delete, size: 14, color: Colors.white),

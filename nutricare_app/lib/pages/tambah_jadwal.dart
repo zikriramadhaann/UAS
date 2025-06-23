@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
+// Halaman untuk menambah jadwal bantuan
 class TambahJadwalPage extends StatefulWidget {
   const TambahJadwalPage({super.key});
 
@@ -9,21 +11,30 @@ class TambahJadwalPage extends StatefulWidget {
 }
 
 class _TambahJadwalPageState extends State<TambahJadwalPage> {
+  // Controller untuk input tanggal
   final TextEditingController tanggalController = TextEditingController();
+  // Controller untuk input waktu
   final TextEditingController waktuController = TextEditingController();
+  // Controller untuk input lokasi
   final TextEditingController lokasiController = TextEditingController();
+  // Controller untuk input catatan
   final TextEditingController catatanController = TextEditingController();
 
+  // Jenis bantuan yang dipilih
   String selectedJenis = 'Bantuan Anak Sekolah';
+  // Daftar jenis bantuan
   final List<String> jenisBantuan = [
     'Bantuan Anak Sekolah',
     'Bantuan Balita',
     'Bantuan Ibu Hamil',
   ];
 
+  // Key untuk form validasi
   final _formKey = GlobalKey<FormState>();
+  // Status loading saat menyimpan
   bool _isLoading = false;
 
+  // Fungsi untuk memilih tanggal menggunakan date picker
   Future<void> _selectDate() async {
     DateTime? picked = await showDatePicker(
       context: context,
@@ -38,6 +49,7 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
     }
   }
 
+  // Fungsi untuk memilih waktu menggunakan time picker
   Future<void> _selectTime() async {
     TimeOfDay? picked = await showTimePicker(
       context: context,
@@ -50,6 +62,7 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
     }
   }
 
+  // Fungsi untuk menyimpan jadwal ke Firestore
   Future<void> _simpanJadwal() async {
     setState(() {
       _isLoading = true;
@@ -63,20 +76,23 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
         'catatan': catatanController.text,
         'createdAt': FieldValue.serverTimestamp(),
       });
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Jadwal berhasil disimpan')),
       );
       tanggalController.clear();
       waktuController.clear();
       lokasiController.clear();
- catatanController.clear();
- // Navigate back to home page after successful save
- Navigator.pop(context);
+      catatanController.clear();
+      // ignore: use_build_context_synchronously
+      Navigator.pop(context);
       setState(() {
         selectedJenis = jenisBantuan[0];
       });
     } catch (e) {
- print('Error saving schedule: $e'); // Debug print
+      // ignore: avoid_print
+      print('Error saving schedule: $e');
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Gagal menyimpan jadwal: $e'),
@@ -95,7 +111,7 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
       backgroundColor: const Color(0xFFF5F5F5),
       body: Column(
         children: [
-          // Header
+          // Header aplikasi
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: const BoxDecoration(
@@ -121,8 +137,6 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
               ],
             ),
           ),
-
-          // Body Form
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
@@ -145,6 +159,7 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      // Judul form
                       const Text(
                         'Tambah Jadwal Bantuan',
                         style: TextStyle(
@@ -154,15 +169,16 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 1),
+                      // Subjudul form
                       const Text(
                         'Silakan isi formulir berikut dengan benar.',
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 14, color: Colors.grey),
                       ),
                       const SizedBox(height: 12),
-
-                      // Dropdown Jenis Bantuan
+                      // Label jenis bantuan
                       _buildLabel("Jenis Bantuan"),
+                      // Dropdown jenis bantuan
                       DropdownButtonFormField<String>(
                         value: selectedJenis,
                         isExpanded: true,
@@ -187,9 +203,9 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
                         },
                       ),
                       const SizedBox(height: 5),
-
-                      // Tanggal
+                      // Label tanggal
                       _buildLabel("Tanggal"),
+                      // Input tanggal
                       TextFormField(
                         controller: tanggalController,
                         readOnly: true,
@@ -203,9 +219,9 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
                         },
                       ),
                       const SizedBox(height: 5),
-
-                      // Waktu
+                      // Label waktu
                       _buildLabel("Waktu"),
+                      // Input waktu
                       TextFormField(
                         controller: waktuController,
                         readOnly: true,
@@ -219,9 +235,9 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
                         },
                       ),
                       const SizedBox(height: 5),
-
-                      // Lokasi Pembagian
+                      // Label lokasi pembagian
                       _buildLabel("Lokasi Pembagian"),
+                      // Input lokasi pembagian
                       TextFormField(
                         controller: lokasiController,
                         decoration: _inputDecoration(
@@ -235,9 +251,9 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
                         },
                       ),
                       const SizedBox(height: 5),
-
-                      // Catatan
+                      // Label catatan lokasi
                       _buildLabel("Catatan Lokasi"),
+                      // Input catatan lokasi
                       TextFormField(
                         controller: catatanController,
                         minLines: 3,
@@ -246,10 +262,8 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
                           hintText: 'Contoh: Puskesmas Selayo ',
                         ),
                       ),
-
                       const SizedBox(height: 22),
-
-                      // Tombol Simpan
+                      // Tombol simpan
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -294,8 +308,7 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
           ),
         ],
       ),
-
-      // Bottom Navbar
+      // Navigasi bawah aplikasi
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           border: Border(top: BorderSide(color: Color(0xFF3CAD75), width: 2)),
@@ -315,19 +328,20 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
             elevation: 0,
             type: BottomNavigationBarType.fixed,
             onTap: (idx) {
+              // Navigasi ke halaman sesuai indeks
               switch (idx) {
                 case 0:
- Navigator.pop(context); // or navigate to home if using Navigator
+                  Navigator.pop(context);
                   break;
                 case 1:
- Navigator.pop(context); // or navigate to formulir if using Navigator
+                  Navigator.pop(context);
                   break;
                 case 2:
                   Navigator.pushNamed(context, '/histori');
                   break;
                 case 3:
                   Navigator.pushNamed(context, '/profil');
- break;
+                  break;
               }      
             },
             items: const [
@@ -351,7 +365,7 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
     );
   }
 
-  // Label helper
+  // Widget untuk label pada form
   Widget _buildLabel(String label) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 3),
@@ -365,7 +379,7 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
     );
   }
 
-  // Input decoration helper
+  // Dekorasi input field
   InputDecoration _inputDecoration({required String hintText}) {
     return InputDecoration(
       hintText: hintText,
@@ -387,7 +401,7 @@ class _TambahJadwalPageState extends State<TambahJadwalPage> {
     );
   }
 
-  // Dropdown items tanpa padding
+  // Membuat item dropdown dari daftar jenis bantuan
   List<DropdownMenuItem<String>> _buildDropdownItems() {
     return jenisBantuan.map((String value) {
       return DropdownMenuItem<String>(
