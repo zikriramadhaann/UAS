@@ -1,4 +1,5 @@
 import 'dart:io';
+// ignore: unnecessary_import
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -178,6 +179,7 @@ class _ProfilPageState extends State<ProfilPage> {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
+                                  // ignore: deprecated_member_use
                                   color: Colors.black.withOpacity(0.1),
                                   blurRadius: 4,
                                 ),
@@ -200,6 +202,7 @@ class _ProfilPageState extends State<ProfilPage> {
                       border: Border.all(color: Colors.grey.shade300),
                       boxShadow: [
                         BoxShadow(
+                          // ignore: deprecated_member_use
                           color: Colors.black.withOpacity(0.03),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
